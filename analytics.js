@@ -177,7 +177,7 @@ define(function()
             // If so, we need to sort out a little race condition! The GA Event is not guaranteed to beat the
             // page redirection.
             var handleLocationRaceCondition = false;
-            if (gaElementType.toLowerCase() === 'a') {
+            if (gaElementType.toLowerCase() === 'a' && gaElement[0].target == '') {
                 handleLocationRaceCondition = true;
                 event.preventDefault();
             }
