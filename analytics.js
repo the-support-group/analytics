@@ -176,7 +176,9 @@ define(function()
             // Are we handling a click event on an a tag which has a href?
             // If so, we need to sort out a little race condition! The GA Event is not guaranteed to beat the
             // page redirection.
+            var handleLocationRaceCondition = false;
             if (gaElementType.toLowerCase() === 'a') {
+                handleLocationRaceCondition = true;
                 event.preventDefault();
             }
 
@@ -184,7 +186,9 @@ define(function()
             sendGAEvent(event, gaEventOptions[0]);
 
             // Send the browser on its merry way (after a brief pause).
-            setTimeout('window.location = "'+gaElement[0].href+'"', 300);
+            if (handleLocationRaceCondition === true) {
+                setTimeout('window.location = "'+gaElement[0].href+'"', 300);
+            }
         }
 
 
