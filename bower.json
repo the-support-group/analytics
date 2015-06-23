@@ -1,0 +1,15 @@
+{
+    "name": "analytics",
+    "version": "0.1",
+    "authors": [
+        "The Support Group"
+    ],
+    "description": "Google Analytics event tracking with data attributes.",
+    "main": "analytics.js",
+    "dependencies": {
+        "jquery": "2.1.*"
+    },
+    "ignore": [
+        ".gitignore"
+    ]
+}
