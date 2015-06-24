@@ -14,6 +14,14 @@ define(function()
 
 
         /**
+         * The Backbone root element, usually $el.
+         *
+         * @type {object}
+         */
+        var viewRootElement;
+
+
+        /**
          * Default options for GA event.
          *
          * @type {object}
@@ -37,7 +45,7 @@ define(function()
 
         /**
          * This optional callback is called before the ga tracking is sent.
-         * If the callback returns false the tracking data is not sent.
+         * If the callback returns false the tracking data will not be sent.
          *
          * @type {function}
          */
@@ -141,36 +149,40 @@ define(function()
          */
         function handleEvent(event) {
             var gaEventType = event.type;
+
             var gaElement = $(event.target);
-            var gaRootElement = $(event.currentTarget);
             var gaElementType = gaElement[0].tagName;
-            var gaRootElementType = gaRootElement[0].tagName;
 
             // Event options, required fields.
             var gaEventDefaultOptions = $.extend({}, defaultEventOptions);
             var gaEventOptions = [];
 
-            // A new event will clear the event queue.
-            eventQueue.length = 0;
+            // Bubble up capture?
+            if (captureEventAtRoot && gaElement.data('ga-event') === undefined) {
 
-            // Are we handling a bubbled event?
-            if (gaElement.is(gaRootElement)) {
-                // No - An element level event.
-                gaEventOptions.push(handleElementEvent(gaEventType, gaElement, gaElementType, gaEventDefaultOptions));
-            } else {
-                // Yes - A bubbled event has been captured. Capture the bubbled event?
-                if (captureEventAtRoot) {
-                    // Handle the event that triggered the bubbling (if allowed to track).
-                    if (gaElement.data('ga-no-track') === undefined) {
-                        gaEventOptions.push(handleElementEvent(gaEventType, gaElement, gaElementType, gaEventDefaultOptions));
+                // Prevent the event bubbling up. We want to deal with the bubbling.
+                event.stopImmediatePropagation();
+
+                // Travel up through the ancestors until a ga-event is found.
+                gaElement.parents().each(
+                    function(index, element) {
+                        var parentElement = $(element);
+
+                        // Has the element got a ga-event handler?
+                        if ($(element).is(viewRootElement) === false && parentElement.data('ga-event') !== undefined && parentElement.data('ga-no-track') === undefined) {
+                            parentElement.trigger(gaEventType);
+                            return false;
+                        } else if ($(element).is(viewRootElement)) {
+                            return false;
+                        }
                     }
+                );
 
-                    // Handle the bubbled event.
-                    gaEventOptions.push(handleElementEvent(gaEventType, gaRootElement, gaRootElementType, gaEventDefaultOptions));
-                } else {
-                    // No - Just capture the main event, ignore the bubbled event.
-                    gaEventOptions.push(handleElementEvent(gaEventType, gaRootElement, gaRootElementType, gaEventDefaultOptions));
-                }
+            } else {
+                gaEventOptions = handleElementEvent(gaEventType, gaElement, gaElementType, gaEventDefaultOptions);
+
+                // Prevent event bubbling up. We don't want to deal with bubbling.
+                event.stopImmediatePropagation();
             }
 
             // Are we handling a click event on an a tag which has a href?
@@ -183,7 +195,7 @@ define(function()
             }
 
             // Trigger event if valid
-            sendGAEvent(event, gaEventOptions[0]);
+            sendGAEvent(event, gaEventOptions);
 
             // Send the browser on its merry way (after a brief pause).
             if (handleLocationRaceCondition === true) {
@@ -298,6 +310,10 @@ define(function()
             // Only continue if GA universal analytics is loaded.
             if (typeof ga === 'function') {
 
+                // Assign the Backbone root element.
+                viewRootElement = element;
+
+                // Find all elements with a GA event.
                 var gaElements = element.find('[data-ga-event]');
 
                 // Did we get any 'before/after event track' callbacks?
