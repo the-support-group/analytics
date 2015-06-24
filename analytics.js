@@ -150,7 +150,7 @@ define(function()
         function handleEvent(event) {
             var gaEventType = event.type;
 
-            var gaElement = $(event.target);
+            var gaElement = $(event.currentTarget);
             var gaElementType = gaElement[0].tagName;
 
             // Event options, required fields.
@@ -159,9 +159,6 @@ define(function()
 
             // Bubble up capture?
             if (captureEventAtRoot && gaElement.data('ga-event') === undefined) {
-
-                // Prevent the event bubbling up. We want to deal with the bubbling.
-                event.stopImmediatePropagation();
 
                 // Travel up through the ancestors until a ga-event is found.
                 gaElement.parents().each(
@@ -180,9 +177,6 @@ define(function()
 
             } else {
                 gaEventOptions = handleElementEvent(gaEventType, gaElement, gaElementType, gaEventDefaultOptions);
-
-                // Prevent event bubbling up. We don't want to deal with bubbling.
-                event.stopImmediatePropagation();
             }
 
             // Are we handling a click event on an a tag which has a href?
