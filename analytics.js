@@ -158,6 +158,7 @@ define(function()
                         deferred.resolve(false);
                     }
 
+
                 });
             }
 
@@ -175,6 +176,7 @@ define(function()
 
             var gaElement = $(event.currentTarget);
             var gaElementType = gaElement[0].tagName;
+            var clickedTarget = $(event.target);
 
             // Event options, required fields.
             var gaEventDefaultOptions = $.extend({}, defaultEventOptions);
@@ -206,8 +208,8 @@ define(function()
             // If so, we need to sort out a little race condition! The GA Event is not guaranteed to beat the
             // page redirection.
             var handleLocationRaceCondition = false;
-
-            if (gaElementType.toLowerCase() === 'a' && gaElement[0].target === '') {
+            
+            if (clickedTarget[0].tagName.toLowerCase() === 'a' && clickedTarget[0].target == '') {
                 handleLocationRaceCondition = true;
                 event.preventDefault();
             }
@@ -223,7 +225,6 @@ define(function()
                 if (handleLocationRaceCondition === true) {
                     window.location = gaElement[0].href;
                 }
-            });
         }
 
 
