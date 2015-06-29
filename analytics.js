@@ -107,6 +107,8 @@ define(function()
          * @param gaEventOptions
          */
         function sendGAEvent(event, gaEventOptions) {
+            var deferred = $.Deferred();
+
             if (gaEventOptions.eventCategory != '' && gaEventOptions.eventAction != '') {
                 $(gaEventOptions).each(function(index, options) {
                     var sendGATracking = true;
@@ -117,28 +119,49 @@ define(function()
                     }
 
                     if (typeof ga === 'function' && sendGATracking === true) {
+
+                        // Add callback to event options.
+                        gaEventOptions.hitCallback = function() {
+
+                            // TODO: Remove this. It is for testing purposes.
+                            console.log('GA Event: ', gaEventOptions);
+
+                            // Process any events in the queue.
+                            if (eventQueue.length > 0) {
+
+                                var queueItemProcessed = 0;
+
+                                for (var eventIndex = 0; eventIndex < eventQueue.length; eventIndex++) {
+
+                                    eventQueue[eventIndex].hitCallback = function() {
+                                        // TODO: Remove this. It is for testing purposes.
+                                        console.log('GA Event: ', eventQueue[queueItemProcessed]);
+
+                                        queueItemProcessed++;
+
+                                        if (queueItemProcessed === eventQueue.length) {
+                                            deferred.resolve(true);
+                                        }
+                                    };
+
+                                    ga('send', eventQueue[eventIndex]);
+                                }
+                            } else {
+                                deferred.resolve(true);
+                            }
+
+                        };
+
                         ga('send', gaEventOptions);
 
-                        // TODO: Remove this. It is for testing purposes.
-                        console.log('GA Event: ', gaEventOptions);
-
-                        // Process any events in the queue.
-                        if (eventQueue.length > 0) {
-                            for (var eventIndex = 0; eventIndex < eventQueue.length; eventIndex++) {
-                                ga('send', eventQueue[eventIndex]);
-
-                                // TODO: Remove this. It is for testing purposes.
-                                console.log('GA Event: ', eventQueue[eventIndex]);
-                            }
-                        }
+                    } else {
+                        deferred.resolve(false);
                     }
 
-                    if (typeof afterTrackCallback === 'function') {
-                        // Call the callback, pass the event and the flag that signified whether events sent.
-                        afterTrackCallback(event, sendGATracking, gaEventOptions, eventQueue);
-                    }
                 });
             }
+
+            return deferred.promise();
         }
 
 
@@ -183,18 +206,24 @@ define(function()
             // If so, we need to sort out a little race condition! The GA Event is not guaranteed to beat the
             // page redirection.
             var handleLocationRaceCondition = false;
-            if (gaElementType.toLowerCase() === 'a' && gaElement[0].target == '') {
+
+            if (gaElementType.toLowerCase() === 'a' && gaElement[0].target === '') {
                 handleLocationRaceCondition = true;
                 event.preventDefault();
             }
 
             // Trigger event if valid
-            sendGAEvent(event, gaEventOptions);
+            sendGAEvent(event, gaEventOptions).done(function(gaTrackingSent) {
+                if (typeof afterTrackCallback === 'function') {
+                    // Call the callback, pass the event and the flag that signified whether events sent.
+                    afterTrackCallback(event, gaTrackingSent, gaEventOptions, eventQueue);
+                }
 
-            // Send the browser on its merry way (after a brief pause).
-            if (handleLocationRaceCondition === true) {
-                setTimeout('window.location = "'+gaElement[0].href+'"', 300);
-            }
+                // Send the browser on its merry way.
+                if (handleLocationRaceCondition === true) {
+                    window.location = gaElement[0].href;
+                }
+            });
         }
 
 
@@ -386,6 +415,7 @@ define(function()
          * @param value The event tracking value.
          */
         function trackEvent(event, category, action, label, value) {
+            var deferred = $.Deferred();
             var gaEventOptions = $.extend({}, defaultEventOptions);
 
             // Defaults.
@@ -420,7 +450,11 @@ define(function()
                 gaEventOptions.eventValue = parseInt(value);
             }
 
-            sendGAEvent(event, gaEventOptions);
+            sendGAEvent(event, gaEventOptions).done(function(gaEventSent) {
+                deferred.resolve(gaEventSent);
+            });
+
+            return deferred.promise();
         }
 
 
