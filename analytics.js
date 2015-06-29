@@ -158,7 +158,6 @@ define(function()
                         deferred.resolve(false);
                     }
 
-
                 });
             }
 
@@ -225,6 +224,7 @@ define(function()
                 if (handleLocationRaceCondition === true) {
                     window.location = gaElement[0].href;
                 }
+            });
         }
 
 
