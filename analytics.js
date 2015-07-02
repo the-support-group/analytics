@@ -222,7 +222,7 @@ define(function()
 
                 // Send the browser on its merry way.
                 if (handleLocationRaceCondition === true) {
-                    window.location = gaElement[0].href;
+                    window.location = clickedTarget[0].href;
                 }
             });
         }
