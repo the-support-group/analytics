@@ -140,6 +140,7 @@ define(function()
                                         queueItemProcessed++;
 
                                         if (queueItemProcessed === eventQueue.length) {
+                                            eventQueue.length = 0;
                                             deferred.resolve(true);
                                         }
                                     };
@@ -399,7 +400,7 @@ define(function()
             var gaOptions = $.extend(defaultEventOptions, options);
 
             if (gaOptions.eventCategory !== '' && gaOptions.eventAction !== '') {
-                eventQueue.push(options);
+                eventQueue.push(gaOptions);
             } else {
                 throw 'Event options could not be added to the queue: Category and Action are mandatory.';
             }
