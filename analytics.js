@@ -419,9 +419,9 @@ define(function()
          * @param {object} event The event.
          * @param {string} category The event tracking category.
          * @param {string} action The event tracking action.
-         * @param {string} label The event tracking label.
-         * @param {integer} value The event tracking value.
-         * @param {boolen} Interactive Is the event classified as interactive?
+         * @param {string|null} label The event tracking label.
+         * @param {int|null} value The event tracking value.
+         * @param {boolean|null} interactive Is the event classified as interactive?
          */
         function trackEvent(event, category, action, label, value, interactive) {
             var deferred = $.Deferred();
