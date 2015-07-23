@@ -29,7 +29,8 @@ define(function()
         var defaultEventOptions = {
             'hitType': 'event',
             'eventCategory': '',
-            'eventAction': ''
+            'eventAction': '',
+            'nonInteraction': false
         };
 
 
@@ -95,6 +96,11 @@ define(function()
                 gaOptions.eventValue = parseInt(gaElement.data('ga-value'));
             }
 
+            // Optional param interactive?
+            if (gaElement.data('ga-interactive') !== undefined && typeof gaElement.data('ga-interactive') === 'boolean') {
+                gaOptions.nonInteraction = !gaElement.data('ga-interactive');
+            }
+
             return gaOptions;
         }
 
@@ -135,7 +141,7 @@ define(function()
 
                                     eventQueue[eventIndex].hitCallback = function() {
                                         // TODO: Remove this. It is for testing purposes.
-                                        console.log('GA Event: ', eventQueue[queueItemProcessed]);
+                                        console.log('Q GA Event: ', eventQueue[queueItemProcessed]);
 
                                         queueItemProcessed++;
 
@@ -208,7 +214,7 @@ define(function()
             // If so, we need to sort out a little race condition! The GA Event is not guaranteed to beat the
             // page redirection.
             var handleLocationRaceCondition = false;
-            
+
             if (clickedTarget[0].tagName.toLowerCase() === 'a' && clickedTarget[0].target == '') {
                 handleLocationRaceCondition = true;
                 event.preventDefault();
@@ -410,13 +416,14 @@ define(function()
         /**
          * Trigger a custom event track.
          *
-         * @param event The event.
-         * @param category The event tracking category.
-         * @param action The event tracking action.
-         * @param label The event tracking label.
-         * @param value The event tracking value.
+         * @param {object} event The event.
+         * @param {string} category The event tracking category.
+         * @param {string} action The event tracking action.
+         * @param {string} label The event tracking label.
+         * @param {integer} value The event tracking value.
+         * @param {boolen} Interactive Is the event classified as interactive?
          */
-        function trackEvent(event, category, action, label, value) {
+        function trackEvent(event, category, action, label, value, interactive) {
             var deferred = $.Deferred();
             var gaEventOptions = $.extend({}, defaultEventOptions);
 
@@ -450,6 +457,11 @@ define(function()
             // Optional param value?
             if (value !== undefined && typeof value === 'number') {
                 gaEventOptions.eventValue = parseInt(value);
+            }
+
+            // Optional non interaction setting?
+            if (interactive !== undefined && typeof interactive === 'boolean') {
+                gaEventOptions.nonInteraction = !interactive;
             }
 
             sendGAEvent(event, gaEventOptions).done(function(gaEventSent) {
