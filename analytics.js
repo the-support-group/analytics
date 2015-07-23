@@ -403,7 +403,7 @@ define(function()
          * @param options Collection of event options.
          */
         function queueEvent(options) {
-            var gaOptions = $.extend(defaultEventOptions, options);
+            var gaOptions = $.extend({}, defaultEventOptions, options);
 
             if (gaOptions.eventCategory !== '' && gaOptions.eventAction !== '') {
                 eventQueue.push(gaOptions);
