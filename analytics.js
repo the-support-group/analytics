@@ -22,6 +22,15 @@ define(function()
 
 
         /**
+         * Is debug mode enabled.
+         * If debug mode is enabled, all event details will be logged to the console.
+         *
+         * @type {boolean}
+         */
+        var debugMode = false;
+
+
+        /**
          * Default options for GA event.
          *
          * @type {object}
@@ -129,8 +138,10 @@ define(function()
                         // Add callback to event options.
                         gaEventOptions.hitCallback = function() {
 
-                            // TODO: Remove this. It is for testing purposes.
-                            console.log('GA Event: ', gaEventOptions);
+                            // Log to console if in debug mode and console function is available (IE9).
+                            if (debugMode && window.console !== undefined) {
+                                console.log('GA Event: ', gaEventOptions);
+                            }
 
                             // Process any events in the queue.
                             if (eventQueue.length > 0) {
@@ -140,8 +151,10 @@ define(function()
                                 for (var eventIndex = 0; eventIndex < eventQueue.length; eventIndex++) {
 
                                     eventQueue[eventIndex].hitCallback = function() {
-                                        // TODO: Remove this. It is for testing purposes.
-                                        console.log('Q GA Event: ', eventQueue[queueItemProcessed]);
+                                        // Log to console if in debug mode and console function is available (IE9).
+                                        if (debugMode && window.console !== undefined) {
+                                            console.log('Q GA Event: ', eventQueue[queueItemProcessed]);
+                                        }
 
                                         queueItemProcessed++;
 
@@ -336,10 +349,16 @@ define(function()
          * @param element The root element.
          * @param captureAtRoot Capture all events at the root level (there must be a handler specified on the root).
          * @param customCallbacks The before tracking callback.
+         * @param enableDebugMode Enable console log event debugging.
          */
-        function attachEventHandlers(element, captureAtRoot, customCallbacks) {
+        function attachEventHandlers(element, captureAtRoot, customCallbacks, enableDebugMode) {
             // Only continue if GA universal analytics is loaded.
             if (typeof ga === 'function') {
+
+                // Activate debug mode?
+                if (enableDebugMode !== undefined && typeof enableDebugMode === 'boolean') {
+                    debugMode = enableDebugMode;
+                }
 
                 // Assign the Backbone root element.
                 viewRootElement = element;
