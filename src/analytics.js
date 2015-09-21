@@ -6,6 +6,14 @@ define(function()
     var analytics = (function() {
 
         /**
+         * Is universal analytics available.
+         *
+         * @type {boolean}
+         */
+        var gaAvailable = true;
+
+
+        /**
          * Allow all events of type(s) to be bubbled to, and captured by the root element.
          *
          * @type {boolean}
@@ -27,7 +35,8 @@ define(function()
          *
          * @type {boolean}
          */
-        var debugMode = false;
+        //var debugMode = false;
+        var debugMode = true;
 
 
         /**
@@ -75,11 +84,11 @@ define(function()
          * Handle a specific element event.
          *  data-ga-event attached to element.
          *
-         * @param gaEventType The type of event triggered.
-         * @param gaElement The element the event was triggered from.
-         * @param gaElementType The type of element.
-         * @param gaEventOptions Default event options.
-         * @returns Event options.
+         * @param {string} gaEventType The type of event triggered.
+         * @param {object} gaElement The element the event was triggered from.
+         * @param {string} gaElementType The type of element.
+         * @param {object} gaEventOptions Default event options.
+         * @returns {object} Event options.
          */
         function handleElementEvent(gaEventType, gaElement, gaElementType, gaEventOptions) {
             // Create a copy of the default options object.
@@ -118,13 +127,13 @@ define(function()
          * Send the tracking event to google.
          * This can be prevented using the before callback.
          *
-         * @param event
-         * @param gaEventOptions
+         * @param {object} event The triggered event.
+         * @param {object} gaEventOptions Collection of event options.
          */
         function sendGAEvent(event, gaEventOptions) {
             var deferred = $.Deferred();
 
-            if (gaEventOptions.eventCategory != '' && gaEventOptions.eventAction != '') {
+            if (gaAvailable === true && gaEventOptions.eventCategory != '' && gaEventOptions.eventAction != '') {
                 $(gaEventOptions).each(function(index, options) {
                     var sendGATracking = true;
 
@@ -145,7 +154,6 @@ define(function()
 
                             // Process any events in the queue.
                             if (eventQueue.length > 0) {
-
                                 var queueItemProcessed = 0;
 
                                 for (var eventIndex = 0; eventIndex < eventQueue.length; eventIndex++) {
@@ -179,6 +187,8 @@ define(function()
                     }
 
                 });
+            } else {
+                deferred.resolve(false);
             }
 
             return deferred.promise();
@@ -188,71 +198,74 @@ define(function()
         /**
          * Handle a generic event.
          *
-         * @param event The event that was triggered.
+         * @param {object} event The event that was triggered.
          */
         function handleEvent(event) {
-            var gaEventType = event.type;
+            // GA available ?
+            if (gaAvailable === true) {
+                var gaEventType = event.type;
 
-            var gaElement = $(event.currentTarget);
-            var gaElementType = gaElement[0].tagName;
-            var clickedTarget = $(event.target);
+                var gaElement = $(event.currentTarget);
+                var gaElementType = gaElement[0].tagName;
+                var clickedTarget = $(event.target);
 
-            // Event options, required fields.
-            var gaEventDefaultOptions = $.extend({}, defaultEventOptions);
-            var gaEventOptions = [];
+                // Event options, required fields.
+                var gaEventDefaultOptions = $.extend({}, defaultEventOptions);
+                var gaEventOptions = [];
 
-            // Bubble up capture?
-            if (captureEventAtRoot && gaElement.data('ga-event') === undefined) {
+                // Bubble up capture?
+                if (captureEventAtRoot && gaElement.data('ga-event') === undefined) {
 
-                // Travel up through the ancestors until a ga-event is found.
-                gaElement.parents().each(
-                    function(index, element) {
-                        var parentElement = $(element);
+                    // Travel up through the ancestors until a ga-event is found.
+                    gaElement.parents().each(
+                        function (index, element) {
+                            var parentElement = $(element);
 
-                        // Has the element got a ga-event handler?
-                        if ($(element).is(viewRootElement) === false && parentElement.data('ga-event') !== undefined && parentElement.data('ga-no-track') === undefined) {
-                            parentElement.trigger(gaEventType);
-                            return false;
-                        } else if ($(element).is(viewRootElement)) {
-                            return false;
+                            // Has the element got a ga-event handler?
+                            if ($(element).is(viewRootElement) === false && parentElement.data('ga-event') !== undefined && parentElement.data('ga-no-track') === undefined) {
+                                parentElement.trigger(gaEventType);
+                                return false;
+                            } else if ($(element).is(viewRootElement)) {
+                                return false;
+                            }
                         }
+                    );
+
+                } else {
+                    gaEventOptions = handleElementEvent(gaEventType, gaElement, gaElementType, gaEventDefaultOptions);
+                }
+
+                // Are we handling a click event on an a tag which has a href?
+                // If so, we need to sort out a little race condition! The GA Event is not guaranteed to beat the
+                // page redirection.
+                var handleLocationRaceCondition = false;
+
+                if (clickedTarget[0].tagName.toLowerCase() === 'a' && clickedTarget[0].target == '') {
+                    handleLocationRaceCondition = true;
+                    event.preventDefault();
+                }
+
+                // Trigger event if valid
+                sendGAEvent(event, gaEventOptions).done(function (gaTrackingSent) {
+                    if (typeof afterTrackCallback === 'function') {
+                        // Call the callback, pass the event and the flag that signified whether events sent.
+                        afterTrackCallback(event, gaTrackingSent, gaEventOptions, eventQueue);
                     }
-                );
 
-            } else {
-                gaEventOptions = handleElementEvent(gaEventType, gaElement, gaElementType, gaEventDefaultOptions);
+                    // Send the browser on its merry way.
+                    if (handleLocationRaceCondition === true) {
+                        window.location = clickedTarget[0].href;
+                    }
+                });
             }
-
-            // Are we handling a click event on an a tag which has a href?
-            // If so, we need to sort out a little race condition! The GA Event is not guaranteed to beat the
-            // page redirection.
-            var handleLocationRaceCondition = false;
-
-            if (clickedTarget[0].tagName.toLowerCase() === 'a' && clickedTarget[0].target == '') {
-                handleLocationRaceCondition = true;
-                event.preventDefault();
-            }
-
-            // Trigger event if valid
-            sendGAEvent(event, gaEventOptions).done(function(gaTrackingSent) {
-                if (typeof afterTrackCallback === 'function') {
-                    // Call the callback, pass the event and the flag that signified whether events sent.
-                    afterTrackCallback(event, gaTrackingSent, gaEventOptions, eventQueue);
-                }
-
-                // Send the browser on its merry way.
-                if (handleLocationRaceCondition === true) {
-                    window.location = clickedTarget[0].href;
-                }
-            });
         }
 
 
         /**
          * Attach custom form submit handlers.
          *
-         * @param element The element that will handle the event.
-         * @param event The event to handle.
+         * @param {object} element The element that will handle the event.
+         * @param {object} event The event to handle.
          */
         function attachFormSubmitHandler(element, event) {
             switch (event) {
@@ -269,9 +282,9 @@ define(function()
         /**
          * Handle the form submit.
          *
-         * @param form The form to submit.
-         * @param event The event that started everything, passed onto the before track callback (if defined).
-         * @param gaEventOptions The GA event options.
+         * @param {object} form The form to submit.
+         * @param {object} event The event that started everything, passed onto the before track callback (if defined).
+         * @param {object} gaEventOptions The GA event options.
          */
         function submitForm(form, event, gaEventOptions) {
             // Check form is valid.
@@ -296,7 +309,7 @@ define(function()
          * Automated form post using enter key.
          * This is accomplished using the event: formsubmit.enter on any input element.
          *
-         * @param element The element that will receive the enter key event.
+         * @param {object} element The element that will receive the enter key event.
          */
         function handleFormPostEnter(element) {
             $(element).on('keydown', function (event) {
@@ -324,7 +337,7 @@ define(function()
          * Automated form post using an element click.
          * This is accomplished using the event: formsubmit.click on any element.
          *
-         * @param element The element that will receive the click event.
+         * @param {object} element The element that will receive the click event.
          */
         function handleFormPostClick(element) {
             $(element).on('click', function (event) {
@@ -346,10 +359,10 @@ define(function()
         /**
          * Attach GA events to all child elements of the specified element.
          *
-         * @param element The root element.
-         * @param captureAtRoot Capture all events at the root level (there must be a handler specified on the root).
-         * @param customCallbacks The before tracking callback.
-         * @param enableDebugMode Enable console log event debugging.
+         * @param {object} element The root element.
+         * @param {boolean} captureAtRoot Capture all events at the root level (there must be a handler specified on the root).
+         * @param {object} customCallbacks The before tracking callback.
+         * @param {boolean} enableDebugMode Enable console log event debugging.
          */
         function attachEventHandlers(element, captureAtRoot, customCallbacks, enableDebugMode) {
             // Only continue if GA universal analytics is loaded.
@@ -411,6 +424,7 @@ define(function()
                 });
 
             } else {
+                gaAvailable = false;
                 throw 'Google universal analytics not loaded.';
             }
         }
@@ -419,7 +433,7 @@ define(function()
         /**
          * Add a custom event to the event queue.
          *
-         * @param options Collection of event options.
+         * @param {object} options Collection of event options.
          */
         function queueEvent(options) {
             var gaOptions = $.extend({}, defaultEventOptions, options);
