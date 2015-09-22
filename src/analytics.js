@@ -472,48 +472,54 @@ define(function()
          */
         function trackEvent(event, category, action, label, value, interactive) {
             var deferred = $.Deferred();
-            var gaEventOptions = $.extend({}, defaultEventOptions);
 
-            // Defaults.
-            var gaEventType = '';
-            var gaElement = {};
-            var gaElementType = '';
+            // Track event can be used in isolation so check for the existence of the ga object.
+            if (gaAvailable === true && typeof window.ga === 'function' && ga.create !== undefined) {
+                var gaEventOptions = $.extend({}, defaultEventOptions);
 
-            // We may not have an event.
-            if (event !== null) {
-                gaEventType = event.type;
-                gaElement = $(event.target);
-                gaElementType = gaElement[0].tagName;
+                // Defaults.
+                var gaEventType = '';
+                var gaElement = {};
+                var gaElementType = '';
+
+                // We may not have an event.
+                if (event !== null) {
+                    gaEventType = event.type;
+                    gaElement = $(event.target);
+                    gaElementType = gaElement[0].tagName;
+                }
+
+                // Did we get an event category?
+                gaEventOptions.eventCategory = (category !== undefined)
+                    ? category
+                    : gaElementType;
+
+                // Did we get an event action?
+                gaEventOptions.eventAction = (action !== undefined)
+                    ? action
+                    : gaEventType;
+
+                // Optional param label?
+                if (label !== undefined) {
+                    gaEventOptions.eventLabel = label;
+                }
+
+                // Optional param value?
+                if (value !== undefined && typeof value === 'number') {
+                    gaEventOptions.eventValue = parseInt(value);
+                }
+
+                // Optional non interaction setting?
+                if (interactive !== undefined && typeof interactive === 'boolean') {
+                    gaEventOptions.nonInteraction = !interactive;
+                }
+
+                sendGAEvent(event, gaEventOptions).done(function(gaEventSent) {
+                    deferred.resolve(gaEventSent);
+                });
+            } else {
+                deferred.resolve(false);
             }
-
-            // Did we get an event category?
-            gaEventOptions.eventCategory = (category !== undefined)
-                ? category
-                : gaElementType;
-
-            // Did we get an event action?
-            gaEventOptions.eventAction = (action !== undefined)
-                ? action
-                : gaEventType;
-
-            // Optional param label?
-            if (label !== undefined) {
-                gaEventOptions.eventLabel = label;
-            }
-
-            // Optional param value?
-            if (value !== undefined && typeof value === 'number') {
-                gaEventOptions.eventValue = parseInt(value);
-            }
-
-            // Optional non interaction setting?
-            if (interactive !== undefined && typeof interactive === 'boolean') {
-                gaEventOptions.nonInteraction = !interactive;
-            }
-
-            sendGAEvent(event, gaEventOptions).done(function(gaEventSent) {
-                deferred.resolve(gaEventSent);
-            });
 
             return deferred.promise();
         }
