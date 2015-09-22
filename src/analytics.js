@@ -35,7 +35,7 @@ define(function()
          *
          * @type {boolean}
          */
-        var debugMode = true;
+        var debugMode = false;
 
 
         /**
