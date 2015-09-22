@@ -70,7 +70,7 @@ The following parameters are available:
     If an element does not have a ga-event data attribute the event can be captured at the root element.
 * **customCallbacks {object|null} [customCallbacks=null]** optional unless any of the succeeding parameters are used.
 
-    An object that contain any combination of the two available callbacks.
+    An object that contains any combination of the two available callbacks.
     ```javascript
         {
             // Triggered before any events are sent, return false to prevent any further events from firing.
@@ -84,7 +84,7 @@ The following parameters are available:
     ```
 * **allowFollowHrefs {boolean} [allowFollowHrefs=true]** optional.
 
-    If you attach an event handler to an <a href="[url]" /a> the system can prevent the hyperlink from being followed, you are then given the option to handle it yourself.
+    If you attach an event handler to an hyperlink the system can prevent the hyperlink from being followed, you are then given the option to handle it yourself.
 * **enableDebugMode {boolean} [enableDebugMode=false]** optional.
 
 ### Manually firing single GA events.
