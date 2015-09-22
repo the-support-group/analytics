@@ -246,11 +246,11 @@ define(function()
                 // page redirection.
                 var handleLocationRaceCondition = false;
 
-                // Prevent any default actions.
-                event.preventDefault();
-
                 // If the element is <a> then check if should be followed.
                 if (followHrefs === true && gaElement[0].tagName.toLowerCase() === 'a' && gaElement[0].target == '') {
+                    // Prevent any default actions.
+                    event.preventDefault();
+
                     handleLocationRaceCondition = true;
                 }
 
