@@ -439,7 +439,6 @@ define(function()
 
             } else {
                 gaAvailable = false;
-                throw 'Google universal analytics not loaded.';
             }
         }
 
