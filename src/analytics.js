@@ -35,7 +35,7 @@ define(function()
          *
          * @type {boolean}
          */
-        var debugMode = false;
+        var debugMode = true;
 
 
         /**
@@ -77,6 +77,14 @@ define(function()
          * @type {function}
          */
         var afterTrackCallback;
+
+
+        /**
+         * If a click is a hyperlink do we want to follow it to its destination?
+         *
+         * @type {boolean}
+         */
+        var followHrefs = true;
 
 
         /**
@@ -203,7 +211,6 @@ define(function()
             // GA available ?
             if (gaAvailable === true) {
                 var gaEventType = event.type;
-
                 var gaElement = $(event.currentTarget);
                 var gaElementType = gaElement[0].tagName;
                 var clickedTarget = $(event.target);
@@ -239,9 +246,12 @@ define(function()
                 // page redirection.
                 var handleLocationRaceCondition = false;
 
-                if (clickedTarget[0].tagName.toLowerCase() === 'a' && clickedTarget[0].target == '') {
+                // Prevent any default actions.
+                event.preventDefault();
+
+                // If the element is <a> then check if should be followed.
+                if (followHrefs === true && gaElement[0].tagName.toLowerCase() === 'a' && gaElement[0].target == '') {
                     handleLocationRaceCondition = true;
-                    event.preventDefault();
                 }
 
                 // Trigger event if valid
@@ -253,7 +263,7 @@ define(function()
 
                     // Send the browser on its merry way.
                     if (handleLocationRaceCondition === true) {
-                        window.location = clickedTarget[0].href;
+                        window.location = gaElement[0].href;
                     }
                 });
             }
@@ -361,11 +371,16 @@ define(function()
          * @param {object} element The root element.
          * @param {boolean} captureAtRoot Capture all events at the root level (there must be a handler specified on the root).
          * @param {object} customCallbacks The before tracking callback.
+         * @param {boolean} allowFollowHrefs If an event is attached to a hyperlink do you want to follow the link once the event has completed?
          * @param {boolean} enableDebugMode Enable console log event debugging.
          */
-        function attachEventHandlers(element, captureAtRoot, customCallbacks, enableDebugMode) {
+        function attachEventHandlers(element, captureAtRoot, customCallbacks, allowFollowHrefs, enableDebugMode) {
             // Only continue if GA universal analytics is loaded.
-            if (typeof ga === 'function') {
+            if (typeof window.ga === 'function' && ga.create !== undefined) {
+                // Follow HREFs?
+                if (allowFollowHrefs !== undefined && typeof allowFollowHrefs === 'boolean') {
+                    followHrefs = allowFollowHrefs;
+                }
 
                 // Activate debug mode?
                 if (enableDebugMode !== undefined && typeof enableDebugMode === 'boolean') {
