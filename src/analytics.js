@@ -88,6 +88,27 @@ define(function()
 
 
         /**
+         * Attach the before/after custom callbacks.
+         *
+         * @param {object} customCallbacks The before tracking callback.
+         */
+        function attachCallbacks(customCallbacks) {
+            // Did we get any 'before/after event track' callbacks?
+            if (customCallbacks !== undefined && typeof customCallbacks === 'object') {
+                // Before handler?
+                if (customCallbacks.before !== undefined && typeof customCallbacks.before === 'function') {
+                    beforeTrackCallback = customCallbacks.before;
+                }
+
+                // After handler?
+                if (customCallbacks.after !== undefined && typeof customCallbacks.after === 'function') {
+                    afterTrackCallback = customCallbacks.after;
+                }
+            }
+        }
+
+
+        /**
          * Handle a specific element event.
          *  data-ga-event attached to element.
          *
@@ -530,7 +551,8 @@ define(function()
         return {
             attachEventHandlers: attachEventHandlers,
             queueEvent: queueEvent,
-            trackEvent: trackEvent
+            trackEvent: trackEvent,
+            attachCallbacks: attachCallbacks
         };
 
     });
