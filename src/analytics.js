@@ -164,7 +164,14 @@ define(function()
             if (gaAvailable === true && gaEventOptions.eventCategory != '' && gaEventOptions.eventAction != '') {
                 $(gaEventOptions).each(function(index, options) {
                     var sendGATracking = true;
-                    var trackingGAObjectName = ga.getAll()[0].get('name');
+                    var trackingGAObject = ga.getAll()[0];
+                    var trackingGAObjectName;
+
+                    if(trackingGAObject.get('name') != '') {
+                        trackingGAObjectName  = trackingGAObject.get('name') + '.';
+                    } else {
+                        trackingGAObjectName = '';
+                    }
 
                     if (typeof beforeTrackCallback === 'function') {
                         // Call the callback, pass the event and the options object.
@@ -201,7 +208,7 @@ define(function()
                                         }
                                     };
 
-                                    ga(trackingGAObjectName + '.send', eventQueue[eventIndex]);
+                                    ga(trackingGAObjectName + 'send', eventQueue[eventIndex]);
                                 }
                             } else {
                                 deferred.resolve(true);
@@ -209,7 +216,7 @@ define(function()
 
                         };
 
-                        ga(trackingGAObjectName + '.send', gaEventOptions);
+                        ga(trackingGAObjectName + 'send', gaEventOptions);
 
                     } else {
                         deferred.resolve(false);
