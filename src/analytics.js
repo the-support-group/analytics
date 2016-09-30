@@ -165,12 +165,10 @@ define(function()
                 $(gaEventOptions).each(function(index, options) {
                     var sendGATracking = true;
                     var trackingGAObject = ga.getAll()[0];
-                    var trackingGAObjectName;
+                    var trackingGAObjectName = '';
 
                     if(trackingGAObject.get('name') != '') {
                         trackingGAObjectName  = trackingGAObject.get('name') + '.';
-                    } else {
-                        trackingGAObjectName = '';
                     }
 
                     if (typeof beforeTrackCallback === 'function') {
