@@ -37,5 +37,17 @@ module.exports = [
             path: resolve('./dist'),
             filename: 'analytics.min.js',
         }
+    },
+    {
+        mode: 'production',
+        target: 'web',
+        entry: {
+            analytics: './src/analytics.js',
+        },
+        output: {
+            path: resolve('./dist'),
+            filename: 'analytics.amd.min.js',
+            libraryTarget: 'amd',
+        }
     }
 ]
